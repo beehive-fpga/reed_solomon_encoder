@@ -28,6 +28,7 @@ module rs_encode_stream_wrap #(
 
     ,output logic                           stream_encoder_dst_resp_data_val
     ,output logic   [DATA_W-1:0]            stream_encoder_dst_resp_data
+    ,output logic                           stream_encoder_dst_resp_last
     ,input  logic                           dst_stream_encoder_resp_data_rdy
 );
     localparam NUM_LINES = (RS_K % DATA_BYTES) == 0 
@@ -193,6 +194,7 @@ module rs_encode_stream_wrap #(
         ,.stream_encode_line_encode_rdy         (stream_encode_line_encode_rdy         )
                                                                                        
         ,.stream_encoder_dst_resp_data_val      (stream_encoder_dst_resp_data_val      )
+        ,.stream_encoder_dst_resp_last          (stream_encoder_dst_resp_last          )
         ,.dst_stream_encoder_resp_data_rdy      (dst_stream_encoder_resp_data_rdy      )
                                                                                        
         ,.parity_mem_wr_val                     (parity_mem_wr_val                     )

@@ -41,12 +41,47 @@ module rs_encode_line_mux_in #(
     logic                       fifo_out_rd_req;
     logic                       fifo_out_empty;
 
+    logic                       in_fifo_wr_req;
+    logic                       in_fifo_full;
+
+    logic                       in_fifo_rd_req;
+    logic   [DATA_W-1:0]        in_fifo_rd_data;
+    logic                       in_fifo_empty;
+
+    logic                       in_fifo_in_ctrl_val;
+    logic                       in_ctrl_in_fifo_rdy;
+
+
+    assign in_fifo_wr_req = src_encoder_line_val & ~in_fifo_full;
+    assign encoder_src_line_rdy = ~in_fifo_full;
+    
+    // a tiny buffer
+    fifo_1r1w #(
+         .width_p       (DATA_W             )
+        ,.log2_els_p    ($clog2(NUM_LINES)  )
+    ) input_buf (
+         .clk   (clk    )
+        ,.rst   (rst    )
+    
+        ,.wr_req    (in_fifo_wr_req     )
+        ,.wr_data   (src_encoder_line   )
+        ,.full      (in_fifo_full       )
+        
+        ,.rd_req    (in_fifo_rd_req     )
+        ,.rd_data   (in_fifo_rd_data    )
+        ,.empty     (in_fifo_empty      )
+    
+    );
+
+    assign in_fifo_in_ctrl_val = ~in_fifo_empty;
+    assign in_fifo_rd_req = in_ctrl_in_fifo_rdy & ~in_fifo_empty;
+
     rs_encode_line_in_ctrl in_ctrl (
          .clk   (clk    )
         ,.rst   (rst    )
     
-        ,.src_encoder_line_val              (src_encoder_line_val               )
-        ,.encoder_src_line_rdy              (encoder_src_line_rdy               )
+        ,.src_encoder_line_val              (in_fifo_in_ctrl_val                )
+        ,.encoder_src_line_rdy              (in_ctrl_in_fifo_rdy                )
     
         ,.in_ctrl_encoder_start_encode      (in_ctrl_encoder_start_encode       )
         ,.in_ctrl_encoder_data_en           (in_ctrl_encoder_data_en            )
@@ -69,7 +104,7 @@ module rs_encode_line_mux_in #(
          .clk   (clk    )
         ,.rst   (rst    )
     
-        ,.src_encoder_line                  (src_encoder_line                   )
+        ,.src_encoder_line                  (in_fifo_rd_data                    )
         
         ,.in_datap_encoder_data             (in_datap_encoder_data              )
                                                                                 

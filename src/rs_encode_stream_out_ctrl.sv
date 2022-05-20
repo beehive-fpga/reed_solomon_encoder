@@ -9,6 +9,7 @@ module rs_encode_stream_out_ctrl (
     ,output logic   stream_encode_line_encode_rdy
 
     ,output logic   stream_encoder_dst_resp_data_val
+    ,output logic   stream_encoder_dst_resp_last
     ,input  logic   dst_stream_encoder_resp_data_rdy
 
     ,output logic   parity_mem_wr_val
@@ -55,6 +56,7 @@ module rs_encode_stream_out_ctrl (
 
     always_comb begin
         stream_encoder_dst_resp_data_val = 1'b0;
+        stream_encoder_dst_resp_last = 1'b0;
         stream_encode_line_encode_rdy = 1'b0;
 
         out_ctrl_in_ctrl_rdy = 1'b0;
@@ -131,6 +133,7 @@ module rs_encode_stream_out_ctrl (
                 if (parity_mem_rd_resp_val & dst_stream_encoder_resp_data_rdy) begin
                     out_ctrl_out_datap_incr_parity_rd_addr = 1'b1;
                     if (out_datap_out_ctrl_last_parity_line) begin
+                        stream_encoder_dst_resp_last = 1'b1;
                         state_next = READY;
                     end
                     else begin
@@ -144,6 +147,7 @@ module rs_encode_stream_out_ctrl (
             end
             default: begin
                 stream_encoder_dst_resp_data_val = 'X;
+                stream_encoder_dst_resp_last = 'X;
                 stream_encode_line_encode_rdy = 'X;
 
                 out_ctrl_in_ctrl_rdy = 'X;

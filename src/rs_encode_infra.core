@@ -24,6 +24,8 @@ filesets:
             - uwcse:beehive:misc
             - uwcse:buckfast:bsg_misc
             - uwcse:beehive:rs_encode_core
+            - uwcse:buckfast:fifo
+            - uwcse:buckfast:packet_queue
         file_type: systemVerilogSource
 
 targets:

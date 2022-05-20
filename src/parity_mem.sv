@@ -27,7 +27,7 @@ module parity_mem #(
 
     logic   [NUM_MEMS-1:0]      wr_vals;
     logic   [MEM_ADDR_W-1:0]    wr_addr;
-    logic   [NUM_MENS_W-1:0]    wr_mem_sel;
+    logic   [NUM_MEMS_W-1:0]    wr_mem_sel;
 
     logic   [NUM_MEMS-1:0]                  rd_resp_vals;
     logic   [NUM_MEMS-1:0][PARITY_W-1:0]    rd_resp_datas;
@@ -44,8 +44,8 @@ module parity_mem #(
         ,.INPUT_WIDTH   (1          )
     ) mem_demux (
          .input_sel     (wr_mem_sel )
-        ,.data_input    (rd_req_val )
-        ,.data_outputs  (rd_req_vals)
+        ,.data_input    (wr_req_val )
+        ,.data_outputs  (wr_vals    )
     );
 
 
@@ -59,18 +59,18 @@ module parity_mem #(
                  .clk   (clk    )
                 ,.rst   (rst    )
             
-                ,.wr_req_val    (wr_vals[i]         )
-                ,.wr_req_addr   (wr_addr            )
-                ,.wr_req_data   (wr_req_data        )
+                ,.wr_req_val    (wr_vals[i]                     )
+                ,.wr_req_addr   (wr_addr                        )
+                ,.wr_req_data   (wr_req_data                    )
                 ,.wr_req_rdy    ()
             
-                ,.rd_req_val    (rd_req_val         )
-                ,.rd_req_addr   (rd_req_addr        )
+                ,.rd_req_val    (rd_req_val                     )
+                ,.rd_req_addr   (rd_req_addr[MEM_ADDR_W-1:0]    )
                 ,.rd_req_rdy    ()
             
-                ,.rd_resp_val   (rd_resp_vals[i]    )
-                ,.rd_resp_data  (rd_resp_datas[i]   )
-                ,.rd_resp_rdy   (rd_resp_rdy        )
+                ,.rd_resp_val   (rd_resp_vals[i]                )
+                ,.rd_resp_data  (rd_resp_datas[i]               )
+                ,.rd_resp_rdy   (rd_resp_rdy                    )
             );
         end
     endgenerate

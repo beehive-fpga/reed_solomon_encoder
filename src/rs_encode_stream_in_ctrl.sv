@@ -88,6 +88,8 @@ module rs_encode_stream_in_ctrl #(
         stream_encoder_src_req_rdy = 1'b0;
         stream_encoder_src_req_data_rdy = 1'b0;
 
+        stream_encode_line_encode_val = 1'b0;
+
         reset_unit_sel = 1'b0;
         incr_unit_sel = 1'b0;
         output_metadata = 1'b0;
@@ -97,12 +99,12 @@ module rs_encode_stream_in_ctrl #(
             READY: begin
                 reset_unit_sel = 1'b1;
                 in_ctrl_in_datap_init_line_count = 1'b1;
-                in_ctrl_in_datap_incr_block_count = 1'b1;
+                in_ctrl_in_datap_init_block_count = 1'b1;
                 stream_encoder_src_req_rdy = 1'b1;
                 in_ctrl_in_datap_store_req_meta = 1'b1;
                 if (src_stream_encoder_req_val) begin
                     output_metadata = 1'b1;
-                    state_next = ENCODE_REQ;
+                    state_next = ENCODE_BLOCK;
                 end
                 else begin
                     state_next = READY;
@@ -110,7 +112,7 @@ module rs_encode_stream_in_ctrl #(
             end
             ENCODE_BLOCK: begin
                 stream_encode_line_encode_val = src_stream_encoder_req_data_val;
-                stream_encoder_src_req_rdy = line_encode_stream_encode_rdy;
+                stream_encoder_src_req_data_rdy = line_encode_stream_encode_rdy;
 
                 if (src_stream_encoder_req_data_val & line_encode_stream_encode_rdy) begin
                     in_ctrl_in_datap_incr_line_count = 1'b1;
@@ -118,20 +120,20 @@ module rs_encode_stream_in_ctrl #(
                         state_next = PAD_BLOCK;
                     end
                     else begin
-                        state_next = ENCODE_REQ;
+                        state_next = ENCODE_BLOCK;
                     end
                 end
                 else begin
-                    state_next = ENCODE_REQ;
+                    state_next = ENCODE_BLOCK;
                 end
             end
             PAD_BLOCK: begin
                 stream_encode_line_encode_val = 1'b1;
-                in_ctrl_in_datap_init_line_count = 1'b1;
                 if (line_encode_stream_encode_rdy) begin
+                    in_ctrl_in_datap_init_line_count = 1'b1;
                     in_ctrl_in_datap_incr_block_count = 1'b1;
                     if (in_datap_in_ctrl_last_block) begin
-                        state_next = READY;
+                        state_next = META_PASS_WAIT;
                     end
                     else begin
                         incr_unit_sel = 1'b1;
@@ -140,6 +142,11 @@ module rs_encode_stream_in_ctrl #(
                 end
                 else begin
                     state_next = PAD_BLOCK;
+                end
+            end
+            META_PASS_WAIT: begin
+                if (meta_state_reg == DATA_PASS_WAIT) begin
+                    state_next = READY;
                 end
             end
             default: begin

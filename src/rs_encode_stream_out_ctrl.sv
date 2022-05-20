@@ -15,7 +15,7 @@ module rs_encode_stream_out_ctrl (
 
     ,output logic   parity_mem_rd_req_val
 
-    ,output logic   parity_mem_rd_resp_val
+    ,input  logic   parity_mem_rd_resp_val
     ,output logic   parity_mem_rd_resp_rdy
 
     ,output logic   out_ctrl_out_datap_store_meta
@@ -38,7 +38,7 @@ module rs_encode_stream_out_ctrl (
         CATCH_DATA_LINES = 2'd1,
         STORE_PARITY = 2'd2,
         OUTPUT_PARITY = 2'd3,
-        UND = 'X;
+        UND = 'X
     } state_e;
 
     state_e state_reg;

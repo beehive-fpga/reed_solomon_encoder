@@ -1,0 +1,32 @@
+CAPI=2:
+name: uwcse:beehive:rs_encode_infra:0.1
+description: Infrastructure to make the Reed Solomon encoder more usable
+
+filesets:
+    rtl:
+        files:
+            - include/rs_encode_pkg.sv
+            - parity_mem.sv
+            - rs_encode_line_in_ctrl.sv
+            - rs_encode_line_in_datap.sv
+            - rs_encode_line_mux_in.sv
+            - rs_encode_line_mux_wrap.sv
+            - rs_encode_line_out_ctrl.sv
+            - rs_encode_line_out_datap.sv
+            - rs_encode_stream_in_ctrl.sv
+            - rs_encode_stream_in_datap.sv
+            - rs_encode_stream_out_ctrl.sv
+            - rs_encode_stream_out_datap.sv
+            - rs_encode_stream_wrap.sv
+            - rs_encoder_line_mux_out_ctrl.sv
+            - rs_line_wrap.sv
+        depend:
+            - uwcse:beehive:misc
+            - uwcse:buckfast:bsg_misc
+            - uwcse:beehive:rs_encode_core
+        file_type: systemVerilogSource
+
+targets:
+    default:
+        filesets: [rtl]
+

@@ -1,6 +1,6 @@
 module rs_encode_stream_in_datap #(
      parameter NUM_REQ_BLOCKS = -1
-    ,parameter NUM_REQ_BLOCKS_W = $clog2(NUM_REQ_BLOCKS)
+    ,parameter NUM_REQ_BLOCKS_W = -1
     ,parameter DATA_W=-1
     ,parameter DATA_BYTES = DATA_W/8
     ,parameter DATA_BYTES_W = $clog2(DATA_BYTES)
@@ -10,7 +10,7 @@ module rs_encode_stream_in_datap #(
      input clk
     ,input rst
 
-    ,input          [NUM_REQ_BLOCKS_W:0]    src_stream_encoder_req_num_blocks
+    ,input          [NUM_REQ_BLOCKS_W-1:0]  src_stream_encoder_req_num_blocks
 
     ,input  logic   [DATA_W-1:0]            src_stream_encoder_req_data
     
@@ -25,7 +25,7 @@ module rs_encode_stream_in_datap #(
 
     ,output logic   [DATA_W-1:0]            stream_encode_line_encode_line
 
-    ,output logic   [NUM_REQ_BLOCKS_W:0]    in_datap_out_datap_req_num_blocks
+    ,output logic   [NUM_REQ_BLOCKS_W-1:0]  in_datap_out_datap_req_num_blocks
 );
 
     localparam NUM_DATA_LINES = RS_DATA_BYTES/DATA_BYTES;

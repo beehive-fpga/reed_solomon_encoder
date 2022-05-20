@@ -3,12 +3,13 @@
  * RS encoders and then reassemble them into a stream of data blocks
  * followed by encoding blocks
  * FIXME (katie): right now, the number of parity mems must be a power of 2 for easy
- * division. There's a way to fix this without division, but it's just more work
+ * division. There's a way to fix this without division, and using a counter that
+ * rolls over at an arbitrary value but it's just more work
  */
-
+import rs_encode_pkg::*;
 module rs_encode_stream_wrap #(
      parameter NUM_REQ_BLOCKS = -1
-    ,parameter NUM_REQ_BLOCKS_W = $clog2(NUM_REQ_BLOCKS)
+    ,parameter NUM_REQ_BLOCKS_W = -1
     ,parameter DATA_W=-1
     ,parameter DATA_BYTES = DATA_W/8
     ,parameter DATA_BYTES_W = $clog2(DATA_BYTES)
@@ -33,6 +34,7 @@ module rs_encode_stream_wrap #(
                            ? RS_K/DATA_BYTES 
                            : (RS_K/DATA_BYTES) + 1;
     localparam NUM_LINES_W = $clog2(NUM_LINES);
+    localparam NUM_RS_UNITS_W = $clog2(NUM_RS_UNITS);
     
     logic                           in_ctrl_in_datap_store_req_meta;
     logic                           in_ctrl_in_datap_init_line_count;
@@ -50,11 +52,12 @@ module rs_encode_stream_wrap #(
     logic                           stream_encode_line_encode_val;
     
     logic                           in_ctrl_out_ctrl_val;
-    logic   [NUM_REQ_BLOCKS_W:0]    in_datap_out_datap_req_num_blocks;
+    logic   [NUM_REQ_BLOCKS_W-1:0]  in_datap_out_datap_req_num_blocks;
     logic                           out_ctrl_in_ctrl_rdy;
 
     logic                           line_encode_stream_encode_val;
     logic   [DATA_W-1:0]            line_encode_stream_encode_line;
+    logic   [PARITY_W-1:0]          line_encode_stream_encode_parity;
     logic                           stream_encode_line_encode_rdy;
     
     logic                           parity_mem_wr_val;
@@ -86,8 +89,7 @@ module rs_encode_stream_wrap #(
     logic   [NUM_RS_UNITS-1:0]  line_encode_rdys;
 
     rs_encode_stream_in_ctrl #(
-         .NUM_RS_UNITS = -1
-        ,.NUM_RS_UNITS_W = $clog2(NUM_RS_UNITS)
+         .NUM_RS_UNITS  (NUM_RS_UNITS)
     ) in_ctrl (
          .clk   (clk    )
         ,.rst   (rst    )
@@ -117,9 +119,10 @@ module rs_encode_stream_wrap #(
     );
 
     rs_encode_stream_in_datap #(
-         .NUM_REQ_BLOCKS    (NUM_REQ_BLOCKS )
-        ,.DATA_W            (DATA_W         )
-        ,.NUM_LINES         (NUM_LINES      )
+         .NUM_REQ_BLOCKS    (NUM_REQ_BLOCKS     )
+        ,.NUM_REQ_BLOCKS_W  (NUM_REQ_BLOCKS_W   ) 
+        ,.DATA_W            (DATA_W             )
+        ,.NUM_LINES         (NUM_LINES          )
     ) in_datap (
          .clk   (clk    )
         ,.rst   (rst    )
@@ -137,13 +140,13 @@ module rs_encode_stream_wrap #(
         ,.in_datap_in_ctrl_last_data_line   (in_datap_in_ctrl_last_data_line    )
         ,.in_datap_in_ctrl_last_block       (in_datap_in_ctrl_last_block        )
                                                                                 
-        ,.line_encode_stream_encode_line    (line_encode_stream_encode_line     )
+        ,.stream_encode_line_encode_line    (stream_encode_line_encode_line     )
     
         ,.in_datap_out_datap_req_num_blocks (in_datap_out_datap_req_num_blocks  )
     );
 
     demux #(
-         .NUM_INPUTS    (NUM_RS_UNITS   )
+         .NUM_OUTPUTS   (NUM_RS_UNITS   )
         ,.INPUT_WIDTH   (1              )
     ) input_val_demux (
          .input_sel     (in_ctrl_rs_unit_sel            )
@@ -169,14 +172,14 @@ module rs_encode_stream_wrap #(
          .clk   (clk    )
         ,.rst   (rst    )
 
-        ,.src_encoder_line_vals (src_encoder_line_vals  )
-        ,.src_encoder_line      (src_encoder_line       )
-        ,.encoder_src_line_rdys (encoder_src_line_rdys  )
+        ,.src_encoder_line_vals (line_encode_vals                   )
+        ,.src_encoder_line      (stream_encode_line_encode_line     )
+        ,.encoder_src_line_rdys (line_encode_rdys                   )
                                                         
-        ,.encoder_dst_line_val  (encoder_dst_line_val   )
-        ,.encoder_dst_line      (encoder_dst_line       )
-        ,.encoder_dst_parity    (encoder_dst_parity     )
-        ,.dst_encoder_line_rdy  (dst_encoder_line_rdy   )
+        ,.encoder_dst_line_val  (line_encode_stream_encode_val      )
+        ,.encoder_dst_line      (line_encode_stream_encode_line     )
+        ,.encoder_dst_parity    (line_encode_stream_encode_parity   )
+        ,.dst_encoder_line_rdy  (stream_encode_line_encode_rdy      )
     );
 
     rs_encode_stream_out_ctrl out_ctrl (
@@ -215,45 +218,47 @@ module rs_encode_stream_wrap #(
     );
 
     rs_encode_stream_out_datap #(
-         .NUM_REQ_BLOCKS(NUM_REQ_BLOCKS )
-        ,.DATA_W        (DATA_W         )
+         .NUM_REQ_BLOCKS    (NUM_REQ_BLOCKS     )
+        ,.NUM_REQ_BLOCKS_W  (NUM_REQ_BLOCKS_W   )
+        ,.DATA_W            (DATA_W             )
     ) out_datap (
          .clk   (clk    )
         ,.rst   (rst    )
     
-        ,.in_datap_out_datap_req_num_blocks     (in_datap_out_datap_req_num_blocks     )
+        ,.in_datap_out_datap_req_num_blocks     (in_datap_out_datap_req_num_blocks      )
+                                                                                        
+        ,.line_encode_stream_encode_line        (line_encode_stream_encode_line         )
+        ,.line_encode_stream_encode_parity      (line_encode_stream_encode_parity       )
                                                                                        
-        ,.line_encode_stream_encode_line        (line_encode_stream_encode_line        )
-                                                                                       
-        ,.stream_encoder_dst_resp_data          (stream_encoder_dst_resp_data          )
-                                                                                       
-        ,.parity_mem_wr_addr                    (parity_mem_wr_addr                    )
-        ,.parity_mem_wr_data                    (parity_mem_wr_data                    )
-                                                                                       
-        ,.parity_mem_rd_req_addr                (parity_mem_rd_req_addr                )
-                                                                                       
-        ,.parity_mem_rd_resp_data               (parity_mem_rd_resp_data               )
-                                                                                       
-        ,.out_ctrl_out_datap_store_meta         (out_ctrl_out_datap_store_meta         )
-        ,.out_ctrl_out_datap_init_req_state     (out_ctrl_out_datap_init_req_state     )
-                                                                                       
-        ,.out_ctrl_out_datap_incr_block_count   (out_ctrl_out_datap_incr_block_count   )
-        ,.out_ctrl_out_datap_init_line_count    (out_ctrl_out_datap_init_line_count    )
-        ,.out_ctrl_out_datap_incr_line_count    (out_ctrl_out_datap_incr_line_count    )
-        ,.out_ctrl_out_datap_incr_parity_wr_addr(out_ctrl_out_datap_incr_parity_wr_addr)
-        ,.out_ctrl_out_datap_incr_parity_rd_addr(out_ctrl_out_datap_incr_parity_rd_addr)
-        ,.out_ctrl_out_datap_parity_out         (out_ctrl_out_datap_parity_out         )
-                                                                                       
-        ,.out_datap_out_ctrl_last_block         (out_datap_out_ctrl_last_block         )
-        ,.out_datap_out_ctrl_last_data_line     (out_datap_out_ctrl_last_data_line     )
-        ,.out_datap_out_ctrl_last_parity_line   (out_datap_out_ctrl_last_parity_line   )
+        ,.stream_encoder_dst_resp_data          (stream_encoder_dst_resp_data           )
+                                                                                        
+        ,.parity_mem_wr_addr                    (parity_mem_wr_addr                     )
+        ,.parity_mem_wr_data                    (parity_mem_wr_data                     )
+                                                                                        
+        ,.parity_mem_rd_req_addr                (parity_mem_rd_req_addr                 )
+                                                                                        
+        ,.parity_mem_rd_resp_data               (parity_mem_rd_resp_data                )
+                                                                                        
+        ,.out_ctrl_out_datap_store_meta         (out_ctrl_out_datap_store_meta          )
+        ,.out_ctrl_out_datap_init_req_state     (out_ctrl_out_datap_init_req_state      )
+                                                                                        
+        ,.out_ctrl_out_datap_incr_block_count   (out_ctrl_out_datap_incr_block_count    )
+        ,.out_ctrl_out_datap_init_line_count    (out_ctrl_out_datap_init_line_count     )
+        ,.out_ctrl_out_datap_incr_line_count    (out_ctrl_out_datap_incr_line_count     )
+        ,.out_ctrl_out_datap_incr_parity_wr_addr(out_ctrl_out_datap_incr_parity_wr_addr )
+        ,.out_ctrl_out_datap_incr_parity_rd_addr(out_ctrl_out_datap_incr_parity_rd_addr )
+        ,.out_ctrl_out_datap_parity_out         (out_ctrl_out_datap_parity_out          )
+                                                                                        
+        ,.out_datap_out_ctrl_last_block         (out_datap_out_ctrl_last_block          )
+        ,.out_datap_out_ctrl_last_data_line     (out_datap_out_ctrl_last_data_line      )
+        ,.out_datap_out_ctrl_last_parity_line   (out_datap_out_ctrl_last_parity_line    )
     );
 
     parity_mem #(
-         .NUM_MEMS      (NUM_MEMS   )
-        ,.LOG2_DEPTH    (LOG2_DEPTH )
-        ,.DATA_W        (DATA_W     )
-        ,.PARITY_W      (PARITY_W   )
+         .NUM_MEMS      (DATA_W/PARITY_W    )
+        ,.LOG2_DEPTH    (NUM_REQ_BLOCKS_W   )
+        ,.DATA_W        (DATA_W             )
+        ,.PARITY_W      (PARITY_W           )
     ) parity_mem (
          .clk   (clk    )
         ,.rst   (rst    )

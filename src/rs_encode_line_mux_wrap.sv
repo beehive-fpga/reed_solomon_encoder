@@ -26,6 +26,7 @@ module rs_encode_line_mux_wrap #(
                                 : RS_K % DATA_BYTES;
 
     logic   [NUM_RS_UNITS-1:0]  in_ctrl_dones;
+    logic   [NUM_RS_UNITS-1:0]  out_ctrl_dones;
 
     logic   [NUM_RS_UNITS-1:0]                  encoder_dst_vals;
     logic   [NUM_RS_UNITS-1:0][RS_WORD_W-1:0]   encoder_dst_bytes;
@@ -54,6 +55,9 @@ module rs_encode_line_mux_wrap #(
                 ,.NUM_LINES (NUM_LINES  )
                 ,.PARITY_W  (PARITY_W   )
             ) in_rs_encoder (
+                 .clk   (clk)
+                ,.rst   (rst)
+
                 ,.src_encoder_line_val  (src_encoder_line_vals[i]   )
                 ,.src_encoder_line      (src_encoder_line           )
                 ,.encoder_src_line_rdy  (encoder_src_line_rdys[i]   )
@@ -87,21 +91,30 @@ module rs_encode_line_mux_wrap #(
     );
 
     demux #(
-         .NUM_INPUTS    (NUM_RS_UNITS   )
+         .NUM_OUTPUTS   (NUM_RS_UNITS   )
         ,.INPUT_WIDTH   (1              )
     ) byte_rdys_demux (
          .input_sel     (out_ctrl_unit_sel          )
         ,.data_input    (out_ctrl_encoder_byte_rdy  )
-        ,.data_outputs  (dst_encoder_byte_rdy       )
+        ,.data_outputs  (dst_encoder_rdys           )
     );
     
     demux #(
-         .NUM_INPUTS    (NUM_RS_UNITS   )
+         .NUM_OUTPUTS   (NUM_RS_UNITS   )
         ,.INPUT_WIDTH   (1              )
-    ) dones_demux (
+    ) out_in_dones_demux (
          .input_sel     (out_ctrl_unit_sel          )
         ,.data_input    (out_ctrl_in_ctrl_done      )
-        ,.data_outputs  (in_ctrl_dones              )
+        ,.data_outputs  (out_ctrl_dones             )
+    );
+    
+    bsg_mux #(
+         .width_p   (1              )
+        ,.els_p     (NUM_RS_UNITS   )
+    ) in_out_dones_mux (
+         .data_i    (in_ctrl_dones              )
+        ,.sel_i     (out_ctrl_unit_sel          )
+        ,.data_o    (in_ctrl_out_ctrl_done      )
     );
 
     rs_encoder_line_mux_out_ctrl #(

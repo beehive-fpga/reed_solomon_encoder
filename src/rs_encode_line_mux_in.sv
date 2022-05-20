@@ -6,6 +6,9 @@ module rs_encode_line_mux_in #(
     ,parameter NUM_LINES=-1
     ,parameter PARITY_W=-1
 )(
+     input clk
+    ,input rst
+
     ,input  logic                       src_encoder_line_val
     ,input  logic   [DATA_W-1:0]        src_encoder_line
     ,output logic                       encoder_src_line_rdy
@@ -17,6 +20,11 @@ module rs_encode_line_mux_in #(
     ,output logic                       in_ctrl_out_done
     ,input  logic                       out_in_ctrl_done
 );
+    
+    localparam LAST_LINE_BYTES = (RS_K % DATA_BYTES) == 0
+                                ? DATA_BYTES
+                                : RS_K % DATA_BYTES;
+
     logic                       in_ctrl_encoder_start_encode;
     logic                       in_ctrl_encoder_data_en;
     logic   [RS_WORD_W-1:0]     in_datap_encoder_data;

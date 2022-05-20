@@ -1,0 +1,17 @@
+CAPI=2:
+name: uwcse:beehive:rs_encode_core:0.1
+description: Core of the Reed Solomon encoder
+
+filesets:
+    verilog_rtl:
+        files:
+            - rs_encode_top_wrap.sv
+        file_type: systemVerilogSource
+    vhdl_rtl:
+        files:
+            - rs_encode.vhd
+        file_type: vhdlSource
+
+targets:
+    default:
+        filesets: [verilog_rtl, vhdl_rtl]

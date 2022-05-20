@@ -7,24 +7,24 @@ module rs_encoder_line_mux_out_ctrl #(
      input clk
     ,input rst
 
-    ,input  logic                       encoder_out_ctrl_byte_val
-    ,output logic                       out_ctrl_encoder_byte_rdy
+    ,input  logic                           encoder_out_ctrl_byte_val
+    ,output logic                           out_ctrl_encoder_byte_rdy
 
-    ,output logic   [NUM_RS_UNITS-1:0]  out_ctrl_unit_sel
+    ,output logic   [NUM_RS_UNITS_W-1:0]    out_ctrl_unit_sel
     
-    ,output logic                       encoder_dst_line_val
-    ,input  logic                       dst_encoder_line_rdy
+    ,output logic                           encoder_dst_line_val
+    ,input  logic                           dst_encoder_line_rdy
 
-    ,output logic                       out_ctrl_out_datap_init_state
-    ,output logic                       out_ctrl_out_datap_store_data
-    ,output logic                       out_ctrl_out_datap_store_parity
-    ,output logic                       out_ctrl_out_datap_incr_line_count
-    ,input  logic                       out_datap_out_ctrl_last_line_byte
-    ,input  logic                       out_datap_out_ctrl_last_line
-    ,input  logic                       out_datap_out_ctrl_last_parity
+    ,output logic                           out_ctrl_out_datap_init_state
+    ,output logic                           out_ctrl_out_datap_store_data
+    ,output logic                           out_ctrl_out_datap_store_parity
+    ,output logic                           out_ctrl_out_datap_incr_line_count
+    ,input  logic                           out_datap_out_ctrl_last_line_byte
+    ,input  logic                           out_datap_out_ctrl_last_line
+    ,input  logic                           out_datap_out_ctrl_last_parity
 
-    ,output logic                       out_ctrl_in_ctrl_done
-    ,input  logic                       in_ctrl_out_ctrl_done
+    ,output logic                           out_ctrl_in_ctrl_done
+    ,input  logic                           in_ctrl_out_ctrl_done
 );
     typedef enum logic [2:0] {
         READY = 3'd0,
@@ -55,7 +55,7 @@ module rs_encoder_line_mux_out_ctrl #(
         end
     end
 
-    assign unit_sel_next
+    assign out_ctrl_unit_sel = unit_sel_reg;
 
     assign unit_sel_next = init_unit_sel
                         ? '0
@@ -83,7 +83,7 @@ module rs_encoder_line_mux_out_ctrl #(
             READY: begin
                 out_ctrl_encoder_byte_rdy = 1'b1;
                 out_ctrl_out_datap_init_state = 1'b1;
-                init_unit_sel = 1'b0;
+                init_unit_sel = 1'b1;
 
                 if (encoder_out_ctrl_byte_val) begin
                     out_ctrl_out_datap_store_data = 1'b1;
@@ -94,7 +94,7 @@ module rs_encoder_line_mux_out_ctrl #(
                 end
             end
             SAVE_OUTPUT_BYTES: begin
-                out_ctrl_encoder_rdy = 1'b1;
+                out_ctrl_encoder_byte_rdy = 1'b1;
                 if (encoder_out_ctrl_byte_val) begin
                     out_ctrl_out_datap_store_data = 1'b1;
                     if (out_datap_out_ctrl_last_line_byte) begin
@@ -114,7 +114,7 @@ module rs_encoder_line_mux_out_ctrl #(
                 end
             end
             SAVE_PARITY_BYTES: begin
-                out_ctrl_encoder_rdy = 1'b1;
+                out_ctrl_encoder_byte_rdy = 1'b1;
                 if (encoder_out_ctrl_byte_val) begin
                     out_ctrl_out_datap_store_parity = 1'b1;
 

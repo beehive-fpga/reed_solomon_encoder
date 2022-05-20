@@ -1,6 +1,7 @@
+import rs_encode_pkg::*;
 module rs_encode_stream_out_datap #(
      parameter NUM_REQ_BLOCKS = -1
-    ,parameter NUM_REQ_BLOCKS_W = $clog2(NUM_REQ_BLOCKS)
+    ,parameter NUM_REQ_BLOCKS_W = -1
     ,parameter DATA_W=-1
     ,parameter DATA_BYTES = DATA_W/8
     ,parameter DATA_BYTES_W = $clog2(DATA_BYTES)
@@ -8,9 +9,10 @@ module rs_encode_stream_out_datap #(
      input clk
     ,input rst
 
-    ,input          [NUM_REQ_BLOCKS_W:0]    in_datap_out_datap_req_num_blocks
+    ,input          [NUM_REQ_BLOCKS_W-1:0]  in_datap_out_datap_req_num_blocks
 
     ,input          [DATA_W-1:0]            line_encode_stream_encode_line
+    ,input          [PARITY_W-1:0]          line_encode_stream_encode_parity
     
     ,output logic   [DATA_W-1:0]            stream_encoder_dst_resp_data
 
@@ -36,7 +38,8 @@ module rs_encode_stream_out_datap #(
     ,output logic                           out_datap_out_ctrl_last_parity_line
 );
     localparam NUM_DATA_LINES = RS_DATA_BYTES/DATA_BYTES;
-    localparam PARITY_MEMS = DATA_BYTES/PARITY_BYTES;
+    localparam NUM_DATA_LINES_W = $clog2(NUM_DATA_LINES);
+    localparam PARITY_MEMS = DATA_BYTES/RS_T;
     localparam PARITY_SHIFT = $clog2(PARITY_MEMS);
 
     logic   [NUM_REQ_BLOCKS_W:0]    req_block_num_reg;
@@ -45,8 +48,8 @@ module rs_encode_stream_out_datap #(
     logic   [NUM_REQ_BLOCKS_W:0]    block_cnt_reg;
     logic   [NUM_REQ_BLOCKS_W:0]    block_cnt_next;
 
-    logic   [NUM_LINES_W-1:0]       line_cnt_reg;
-    logic   [NUM_LINES_W-1:0]       line_cnt_next;
+    logic   [NUM_DATA_LINES_W-1:0]  line_cnt_reg;
+    logic   [NUM_DATA_LINES_W-1:0]  line_cnt_next;
 
     logic   [NUM_REQ_BLOCKS_W-1:0]  wr_addr_reg;
     logic   [NUM_REQ_BLOCKS_W-1:0]  wr_addr_next;
@@ -58,7 +61,7 @@ module rs_encode_stream_out_datap #(
 
     assign num_parity_lines = req_block_num_reg >> PARITY_SHIFT;
 
-    assign parity_mem_wr_data = line_encode_stream_encode_line;
+    assign parity_mem_wr_data = line_encode_stream_encode_parity;
     assign parity_mem_wr_addr = wr_addr_reg;
     assign parity_mem_rd_req_addr = rd_req_addr_reg;
 
@@ -99,7 +102,7 @@ module rs_encode_stream_out_datap #(
                             ? '0
                             : out_ctrl_out_datap_incr_parity_rd_addr
                                 ? rd_req_addr_reg + 1'b1
-                                : rd_req_addr_next;
+                                : rd_req_addr_reg;
 
     always_ff @(posedge clk) begin
         if (rst) begin

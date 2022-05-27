@@ -24,6 +24,7 @@ module rs_encode_line_mux_wrap #(
     localparam LAST_LINE_BYTES = (RS_K % DATA_BYTES) == 0
                                 ? DATA_BYTES
                                 : RS_K % DATA_BYTES;
+    localparam NUM_RS_UNITS_W = $clog2(NUM_RS_UNITS);
 
     logic   [NUM_RS_UNITS-1:0]  in_ctrl_dones;
     logic   [NUM_RS_UNITS-1:0]  out_ctrl_dones;
@@ -46,6 +47,8 @@ module rs_encode_line_mux_wrap #(
     logic                                       encoder_out_ctrl_byte_val;
     logic   [RS_WORD_W-1:0]                     encoder_out_datap_byte;
     logic                                       out_ctrl_encoder_byte_rdy;
+    
+    logic   [NUM_RS_UNITS_W-1:0]                out_ctrl_unit_sel;
 
     genvar i;
     generate

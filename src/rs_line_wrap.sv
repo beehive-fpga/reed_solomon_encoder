@@ -24,6 +24,12 @@ module rs_encode_line_wrap #(
     ,output logic   [PARITY_W-1:0]      encoder_dst_parity
     ,input  logic                       dst_encoder_line_rdy
 );
+
+    typedef struct packed {
+        logic   [DATA_W-1:0]    data;
+        logic   [PARITY_W-1:0]  parity;
+    } fifo_struct;
+
     localparam LAST_LINE_BYTES = (RS_K % DATA_BYTES) == 0
                                 ? DATA_BYTES
                                 : RS_K % DATA_BYTES;
@@ -59,14 +65,44 @@ module rs_encode_line_wrap #(
     logic                       out_datap_out_ctrl_last_line;
     logic                       out_datap_out_ctrl_last_parity;
 
+    logic                       encoder_fifo_wr_req;
+    fifo_struct                 encoder_fifo_wr_data; 
+
+    logic                       fifo_rd_req;
+    logic                       fifo_rd_val;
+    fifo_struct                 fifo_rd_data;
+
+    logic                       encoder_in_fifo_rd_req;
+    logic                       encoder_in_fifo_rdy;
+    logic                       in_fifo_encoder_val;
+    logic   [DATA_W-1:0]        in_fifo_encoder_data;
+    
+    bsg_fifo_1r1w_small #( 
+         .width_p   (DATA_W     )
+        ,.els_p     (NUM_LINES  )
+        ,.harden_p  (1)
+    ) input_buf ( 
+         .clk_i     (clk    )
+        ,.reset_i   (rst    )
+    
+        ,.v_i       (src_encoder_line_val   )
+        ,.ready_o   (encoder_src_line_rdy   )
+        ,.data_i    (src_encoder_line       )
+    
+        ,.v_o       (in_fifo_encoder_val    )
+        ,.data_o    (in_fifo_encoder_data   )
+        ,.yumi_i    (encoder_in_fifo_rd_req )
+    );
+
+    assign encoder_in_fifo_rd_req = in_fifo_encoder_val & encoder_in_fifo_rdy;
 
 
     rs_encode_line_in_ctrl in_ctrl (
          .clk   (clk    )
         ,.rst   (rst    )
     
-        ,.src_encoder_line_val              (src_encoder_line_val               )
-        ,.encoder_src_line_rdy              (encoder_src_line_rdy               )
+        ,.src_encoder_line_val              (in_fifo_encoder_val                )
+        ,.encoder_src_line_rdy              (encoder_in_fifo_rdy                )
     
         ,.in_ctrl_encoder_start_encode      (in_ctrl_encoder_start_encode       )
         ,.in_ctrl_encoder_data_en           (in_ctrl_encoder_data_en            )
@@ -89,7 +125,7 @@ module rs_encode_line_wrap #(
          .clk   (clk    )
         ,.rst   (rst    )
     
-        ,.src_encoder_line                  (src_encoder_line                   )
+        ,.src_encoder_line                  (in_fifo_encoder_data               )
         
         ,.in_datap_encoder_data             (in_datap_encoder_data              )
                                                                                 
@@ -136,8 +172,8 @@ module rs_encode_line_wrap #(
          .clk   (clk    )
         ,.rst   (rst    )
     
-        ,.encoder_dst_line_val              (encoder_dst_line_val               )
-        ,.dst_encoder_line_rdy              (dst_encoder_line_rdy               )
+        ,.encoder_dst_line_val              (encoder_fifo_val                   )
+        ,.dst_encoder_line_rdy              (fifo_encoder_rdy                   )
                                                                                 
         ,.fifo_out_ctrl_data_val            (fifo_out_ctrl_data_val             )
         ,.out_ctrl_fifo_data_rdy            (out_ctrl_fifo_data_rdy             )
@@ -164,8 +200,8 @@ module rs_encode_line_wrap #(
     
         ,.fifo_out_datap_data               (fifo_out_datap_data                )
     
-        ,.encoder_dst_line                  (encoder_dst_line                   )
-        ,.encoder_dst_parity                (encoder_dst_parity                 )
+        ,.encoder_dst_line                  (encoder_fifo_wr_data.data          )
+        ,.encoder_dst_parity                (encoder_fifo_wr_data.parity        )
                                                                                 
         ,.out_ctrl_out_datap_init_state     (out_ctrl_out_datap_init_state      )
         ,.out_ctrl_out_datap_store_data     (out_ctrl_out_datap_store_data      )
@@ -175,4 +211,26 @@ module rs_encode_line_wrap #(
         ,.out_datap_out_ctrl_last_line      (out_datap_out_ctrl_last_line       )
         ,.out_datap_out_ctrl_last_parity    (out_datap_out_ctrl_last_parity     )
     );
+        
+    bsg_fifo_1r1w_small #( 
+         .width_p   (DATA_W + PARITY_W)
+        ,.els_p     (4)
+        ,.harden_p  (1)
+    ) line_out_fifo ( 
+         .clk_i     (clk    )
+        ,.reset_i   (rst    )
+    
+        ,.v_i       (encoder_fifo_val       )
+        ,.ready_o   (fifo_encoder_rdy       )
+        ,.data_i    (encoder_fifo_wr_data   )
+    
+        ,.v_o       (fifo_rd_val            )
+        ,.data_o    (fifo_rd_data           )
+        ,.yumi_i    (fifo_rd_req            )
+    );
+
+    assign fifo_rd_req = fifo_rd_val & dst_encoder_line_rdy;
+    assign encoder_dst_line_val = fifo_rd_val;
+    assign encoder_dst_line = fifo_rd_data.data;
+    assign encoder_dst_parity = fifo_rd_data.parity;
 endmodule

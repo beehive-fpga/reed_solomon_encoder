@@ -164,19 +164,18 @@ module rs_encode_stream_wrap #(
         ,.data_o    (line_encode_stream_encode_rdy  )
     );
 
-    rs_encode_line_mux_wrap #(
-         .DATA_W        (DATA_W         )
-        ,.NUM_LINES     (NUM_LINES      )
-        ,.PARITY_W      (PARITY_W       )
-        ,.NUM_RS_UNITS  (NUM_RS_UNITS   )
+    rs_encoder_line_16_mux #(
+         .DATA_W    (DATA_W     )
+        ,.NUM_LINES (NUM_LINES  )
+        ,.PARITY_W  (PARITY_W   )
     ) line_encode (
          .clk   (clk    )
         ,.rst   (rst    )
-
+    
         ,.src_encoder_line_vals (line_encode_vals                   )
         ,.src_encoder_line      (stream_encode_line_encode_line     )
         ,.encoder_src_line_rdys (line_encode_rdys                   )
-                                                        
+        
         ,.encoder_dst_line_val  (line_encode_stream_encode_val      )
         ,.encoder_dst_line      (line_encode_stream_encode_line     )
         ,.encoder_dst_parity    (line_encode_stream_encode_parity   )

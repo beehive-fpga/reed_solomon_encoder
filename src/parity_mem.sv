@@ -31,9 +31,10 @@ module parity_mem #(
 
     logic   [NUM_MEMS-1:0]                  rd_resp_vals;
     logic   [NUM_MEMS-1:0][PARITY_W-1:0]    rd_resp_datas;
+    logic   [NUM_MEMS-1:0][PARITY_W-1:0]    rd_resp_datas_flipped;
 
     assign rd_resp_val = |rd_resp_vals;
-    assign rd_resp_data = rd_resp_datas;
+    assign rd_resp_data = rd_resp_datas_flipped;
 
     assign wr_addr = wr_req_addr >> ADDR_SHIFT;
 
@@ -47,6 +48,13 @@ module parity_mem #(
         ,.data_input    (wr_req_val )
         ,.data_outputs  (wr_vals    )
     );
+
+    genvar flip;
+    generate
+        for (flip = 0; flip < NUM_MEMS; flip = flip + 1) begin
+            assign rd_resp_datas_flipped[flip] = rd_resp_datas[NUM_MEMS - 1 - flip];
+        end
+    endgenerate
 
 
     genvar i;

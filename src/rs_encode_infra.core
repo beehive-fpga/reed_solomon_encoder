@@ -20,7 +20,6 @@ filesets:
             - rs_encode_stream_wrap.sv
             - rs_encoder_line_mux_out_ctrl.sv
             - rs_line_wrap.sv
-            - rs_encoder_line_32_mux.sv
             - rs_encoder_line_16_mux.sv
             - rs_line_32_to_1.sv
             - rs_line_16_to_1.sv

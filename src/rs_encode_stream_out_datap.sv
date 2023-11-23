@@ -5,6 +5,8 @@ module rs_encode_stream_out_datap #(
     ,parameter DATA_W=-1
     ,parameter DATA_BYTES = DATA_W/8
     ,parameter DATA_BYTES_W = $clog2(DATA_BYTES)
+    ,parameter NUM_LINES = -1
+    ,parameter NUM_LINES_W = $clog2(NUM_LINES)
 )(
      input clk
     ,input rst
@@ -35,12 +37,17 @@ module rs_encode_stream_out_datap #(
 
     ,output logic                           out_datap_out_ctrl_last_block
     ,output logic                           out_datap_out_ctrl_last_data_line
+    ,output logic                           out_datap_out_ctrl_last_all_pad_line
     ,output logic                           out_datap_out_ctrl_last_parity_line
 );
     localparam NUM_DATA_LINES = RS_DATA_BYTES/DATA_BYTES;
     localparam NUM_DATA_LINES_W = $clog2(NUM_DATA_LINES);
     localparam PARITY_MEMS = DATA_BYTES/RS_T;
     localparam PARITY_SHIFT = $clog2(PARITY_MEMS);
+    localparam PARITY_LINES = (RS_T % DATA_BYTES) == 0
+                            ? RS_T/DATA_BYTES
+                            : (RS_T/DATA_BYTES) + 1;
+    localparam LAST_ALL_PAD_LINE = (NUM_LINES - PARITY_LINES) - 1;
 
     logic   [NUM_REQ_BLOCKS_W:0]    req_block_num_reg;
     logic   [NUM_REQ_BLOCKS_W:0]    req_block_num_next;
@@ -48,8 +55,8 @@ module rs_encode_stream_out_datap #(
     logic   [NUM_REQ_BLOCKS_W:0]    block_cnt_reg;
     logic   [NUM_REQ_BLOCKS_W:0]    block_cnt_next;
 
-    logic   [NUM_DATA_LINES_W-1:0]  line_cnt_reg;
-    logic   [NUM_DATA_LINES_W-1:0]  line_cnt_next;
+    logic   [NUM_LINES_W-1:0]       line_cnt_reg;
+    logic   [NUM_LINES_W-1:0]       line_cnt_next;
 
     logic   [NUM_REQ_BLOCKS_W-1:0]  wr_addr_reg;
     logic   [NUM_REQ_BLOCKS_W-1:0]  wr_addr_next;
@@ -67,6 +74,8 @@ module rs_encode_stream_out_datap #(
 
     assign out_datap_out_ctrl_last_block = block_cnt_reg == (req_block_num_reg - 1'b1);
     assign out_datap_out_ctrl_last_data_line = line_cnt_reg == (NUM_DATA_LINES-1);
+
+    assign out_datap_out_ctrl_last_all_pad_line = line_cnt_reg == (LAST_ALL_PAD_LINE);
 
     // we don't subtract 1, because rd_req_addr_reg runs an address ahead of what
     // we're outputting

@@ -46,6 +46,7 @@ module rs_encode_stream_wrap #(
     logic   [NUM_RS_UNITS_W-1:0]    in_ctrl_rs_unit_sel;
 
     logic                           in_datap_in_ctrl_last_data_line;
+    logic                           in_datap_in_ctrl_last_pad_line;
     logic                           in_datap_in_ctrl_last_block;
 
     logic                           line_encode_stream_encode_rdy;
@@ -83,6 +84,7 @@ module rs_encode_stream_wrap #(
     logic                           out_ctrl_out_datap_parity_out;
 
     logic                           out_datap_out_ctrl_last_block;
+    logic                           out_datap_out_ctrl_last_all_pad_line;
     logic                           out_datap_out_ctrl_last_data_line;
     logic                           out_datap_out_ctrl_last_parity_line;
 
@@ -110,6 +112,7 @@ module rs_encode_stream_wrap #(
         ,.in_ctrl_rs_unit_sel               (in_ctrl_rs_unit_sel                )
                                                                                 
         ,.in_datap_in_ctrl_last_data_line   (in_datap_in_ctrl_last_data_line    )
+        ,.in_datap_in_ctrl_last_pad_line    (in_datap_in_ctrl_last_pad_line     )
         ,.in_datap_in_ctrl_last_block       (in_datap_in_ctrl_last_block        )
     
         ,.line_encode_stream_encode_rdy     (line_encode_stream_encode_rdy      )
@@ -139,6 +142,7 @@ module rs_encode_stream_wrap #(
         ,.in_ctrl_in_datap_incr_block_count (in_ctrl_in_datap_incr_block_count  )
                                                                                 
         ,.in_datap_in_ctrl_last_data_line   (in_datap_in_ctrl_last_data_line    )
+        ,.in_datap_in_ctrl_last_pad_line    (in_datap_in_ctrl_last_pad_line     )
         ,.in_datap_in_ctrl_last_block       (in_datap_in_ctrl_last_block        )
                                                                                 
         ,.stream_encode_line_encode_line    (stream_encode_line_encode_line     )
@@ -215,6 +219,7 @@ module rs_encode_stream_wrap #(
                                                                                        
         ,.out_datap_out_ctrl_last_block         (out_datap_out_ctrl_last_block         )
         ,.out_datap_out_ctrl_last_data_line     (out_datap_out_ctrl_last_data_line     )
+        ,.out_datap_out_ctrl_last_all_pad_line  (out_datap_out_ctrl_last_all_pad_line)
         ,.out_datap_out_ctrl_last_parity_line   (out_datap_out_ctrl_last_parity_line   )
     );
 
@@ -222,6 +227,7 @@ module rs_encode_stream_wrap #(
          .NUM_REQ_BLOCKS    (NUM_REQ_BLOCKS     )
         ,.NUM_REQ_BLOCKS_W  (NUM_REQ_BLOCKS_W   )
         ,.DATA_W            (DATA_W             )
+        ,.NUM_LINES         (NUM_LINES          )
     ) out_datap (
          .clk   (clk    )
         ,.rst   (rst    )
@@ -252,6 +258,7 @@ module rs_encode_stream_wrap #(
                                                                                         
         ,.out_datap_out_ctrl_last_block         (out_datap_out_ctrl_last_block          )
         ,.out_datap_out_ctrl_last_data_line     (out_datap_out_ctrl_last_data_line      )
+        ,.out_datap_out_ctrl_last_all_pad_line  (out_datap_out_ctrl_last_all_pad_line)
         ,.out_datap_out_ctrl_last_parity_line   (out_datap_out_ctrl_last_parity_line    )
     );
 

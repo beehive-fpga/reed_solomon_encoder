@@ -31,14 +31,16 @@ module rs_encode_stream_out_ctrl (
 
     ,input  logic   out_datap_out_ctrl_last_block
     ,input  logic   out_datap_out_ctrl_last_data_line
+    ,input  logic   out_datap_out_ctrl_last_all_pad_line
     ,input  logic   out_datap_out_ctrl_last_parity_line
 );
 
-    typedef enum logic [1:0] {
-        READY = 2'd0,
-        CATCH_DATA_LINES = 2'd1,
-        STORE_PARITY = 2'd2,
-        OUTPUT_PARITY = 2'd3,
+    typedef enum logic [2:0] {
+        READY = 3'd0,
+        CATCH_DATA_LINES = 3'd1,
+        STORE_PARITY = 3'd2,
+        OUTPUT_PARITY = 3'd3,
+        DRAIN_PADDING = 3'd4,
         UND = 'X
     } state_e;
 
@@ -94,14 +96,22 @@ module rs_encode_stream_out_ctrl (
                 if (line_encode_stream_encode_val & dst_stream_encoder_resp_data_rdy) begin
                     out_ctrl_out_datap_incr_line_count = 1'b1;
                     if (out_datap_out_ctrl_last_data_line) begin
-                        state_next = STORE_PARITY;
-                    end
-                    else begin
-                        state_next = CATCH_DATA_LINES;
+                        if (out_datap_out_ctrl_last_all_pad_line) begin
+                            state_next = STORE_PARITY;
+                        end
+                        else begin
+                            state_next = DRAIN_PADDING;
+                        end
                     end
                 end
-                else begin
-                    state_next = CATCH_DATA_LINES;
+            end
+            DRAIN_PADDING: begin
+                stream_encode_line_encode_rdy = 1'b1;
+                if (line_encode_stream_encode_val) begin
+                    out_ctrl_out_datap_init_line_count = 1'b1;
+                    if (out_datap_out_ctrl_last_all_pad_line) begin
+                        state_next = STORE_PARITY;
+                    end
                 end
             end
             STORE_PARITY: begin

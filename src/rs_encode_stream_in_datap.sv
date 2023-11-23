@@ -21,6 +21,7 @@ module rs_encode_stream_in_datap #(
     ,input  logic                           in_ctrl_in_datap_incr_block_count
 
     ,output logic                           in_datap_in_ctrl_last_data_line
+    ,output logic                           in_datap_in_ctrl_last_pad_line
     ,output logic                           in_datap_in_ctrl_last_block
 
     ,output logic   [DATA_W-1:0]            stream_encode_line_encode_line
@@ -44,9 +45,10 @@ module rs_encode_stream_in_datap #(
     assign in_datap_out_datap_req_num_blocks = req_blocks_reg;
 
     assign in_datap_in_ctrl_last_data_line = num_lines_reg == (NUM_DATA_LINES - 1);
+    assign in_datap_in_ctrl_last_pad_line = num_lines_reg == (NUM_LINES - 1);
     assign in_datap_in_ctrl_last_block = block_cnt_reg == (req_blocks_reg - 1);
 
-    assign pad_sel = num_lines_reg == (NUM_LINES - 1);
+    assign pad_sel = num_lines_reg >= NUM_DATA_LINES;
 
     assign stream_encode_line_encode_line = pad_sel
                                             ? '0

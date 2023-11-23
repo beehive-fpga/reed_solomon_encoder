@@ -92,10 +92,8 @@ generate
             ,.dst_n_to_1_line_rdy     (reducer_fifo_rdys[tier_1_i]      )
         );
     
-        bsg_fifo_1r1w_small #( 
+        bsg_two_fifo #( 
              .width_p   (DATA_W + PARITY_W)
-            ,.els_p     (2)
-            ,.harden_p  (1)
         ) reducer_fifo ( 
              .clk_i     (clk    )
             ,.reset_i   (rst    )

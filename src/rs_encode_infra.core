@@ -27,10 +27,10 @@ filesets:
             
         depend:
             - uwcse:beehive:misc
-            - uwcse:buckfast:bsg_misc
-            - uwcse:buckfast:bsg_dataflow
+            - uwcse:basejump:bsg_misc
+            - uwcse:basejump:bsg_dataflow
             - uwcse:beehive:rs_encode_core
-            - uwcse:buckfast:fifo
+            - uwcse:beehive:fifo
             - uwcse:buckfast:packet_queue
         file_type: systemVerilogSource
 

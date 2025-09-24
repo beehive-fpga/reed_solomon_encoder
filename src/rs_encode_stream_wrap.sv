@@ -6,8 +6,9 @@
  * division. There's a way to fix this without division, and using a counter that
  * rolls over at an arbitrary value but it's just more work
  */
+module rs_encode_stream_wrap 
 import rs_encode_pkg::*;
-module rs_encode_stream_wrap #(
+#(
      parameter NUM_REQ_BLOCKS = -1
     ,parameter NUM_REQ_BLOCKS_W = -1
     ,parameter DATA_W=-1

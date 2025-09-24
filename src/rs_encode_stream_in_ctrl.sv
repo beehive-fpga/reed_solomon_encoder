@@ -178,25 +178,16 @@ module rs_encode_stream_in_ctrl #(
                 if (output_metadata) begin
                     meta_state_next = PASS_METADATA;
                 end
-                else begin
-                    meta_state_next = WAITING;
-                end
             end
             PASS_METADATA: begin
                 in_ctrl_out_ctrl_val = 1'b1;
                 if (out_ctrl_in_ctrl_rdy) begin
                     meta_state_next = DATA_PASS_WAIT;
                 end
-                else begin
-                    meta_state_next = PASS_METADATA;
-                end
             end
             DATA_PASS_WAIT: begin
                 if (state_reg == META_PASS_WAIT) begin
                     meta_state_next = WAITING;
-                end
-                else begin
-                    meta_state_next = DATA_PASS_WAIT;
                 end
             end
             default: begin
